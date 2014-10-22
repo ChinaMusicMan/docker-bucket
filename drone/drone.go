@@ -38,6 +38,7 @@ func drone(yaml string) {
 	}
 	fmt.Println(s.Dependencies)
 	for _, f := range s.Dependencies {
+		//run函数这里就开始调用Docker的API
 		run("../tests/drone/" + f)
 	}
 	run(yaml)
@@ -52,6 +53,7 @@ func run(path string) {
 	dockerClient := docker.New()
 
 	// parse the Drone yml file
+	// 解析Drone的yml文件
 	s, err := script.ParseBuildFile(path)
 	//fmt.Println(s.Repo)
 	if err != nil {
@@ -63,6 +65,7 @@ func run(path string) {
 	// get the repository url
 	// here we should use githubapi to accplish this
 	//dir := filepath.Dir(path)
+	//构建当前代码相关的repo
 	code := repo.Repo{
 		Name:   "test",
 		Branch: "HEAD",
@@ -80,6 +83,7 @@ func run(path string) {
 	builds := []*script.Build{s}
 
 	// loop through and create builders
+	//创建builder
 	for _, b := range builds { //script.Builds {
 		builder := build.New(dockerClient)
 		builder.Build = b
@@ -99,6 +103,7 @@ func run(path string) {
 
 	//switch *parallel {
 	//case false:
+	//串行对镜像进行编译
 	runSequential(builders)
 	//case true:
 	//runParallel(builders)
@@ -112,6 +117,7 @@ func run(path string) {
 	fmt.Printf("\nDrone Build Results \033[90m(%v)\033[0m\n", len(builders))
 
 	// loop through and print results
+	// 将编译结果输出
 	for _, builder := range builders {
 		build := builder.Build
 		res := builder.BuildState

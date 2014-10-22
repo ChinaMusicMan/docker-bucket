@@ -99,6 +99,7 @@ func (c *ImageService) Inspect(name string) (*Image, error) {
 func (c *ImageService) Build(tag, dir string) error {
 
 	// tar the file
+	// #Docker 此处并没有调用Docker的服务，而是调用google code 的tar来对某个目录进行tar操作，大部分docker代码依赖都来自于此
 	context, err := archive.Tar(dir, archive.Uncompressed)
 	if err != nil {
 		return err

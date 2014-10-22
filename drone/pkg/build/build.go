@@ -181,9 +181,11 @@ func (b *Builder) setup() error {
 		cname := fmt.Sprintf("%s/%s:%s", owner, name, tag)
 
 		// Get the image info
+		// #Docker 这里需要得到Service Img的地址
 		img, err := b.dockerClient.Images.Inspect(cname)
 		if err != nil {
 			// Get the image if it doesn't exist
+			// #Docker 这里需要得到Service Img
 			if err := b.dockerClient.Images.Pull(cname); err != nil {
 				return fmt.Errorf("Error: Unable to pull image %s", cname)
 			}
@@ -198,12 +200,14 @@ func (b *Builder) setup() error {
 		log.Infof("starting service container %s", cname)
 
 		// Run the contianer
+		// #Docker 运行容器
 		run, err := b.dockerClient.Containers.RunDaemonPorts(cname, img.Config.ExposedPorts)
 		if err != nil {
 			return err
 		}
 
 		// Get the container info
+		// #Docker 得到容器信息,至此Service相关容器就运行起来了
 		info, err := b.dockerClient.Containers.Inspect(run.ID)
 		if err != nil {
 			// on error kill the container since it hasn't yet been
@@ -239,6 +243,7 @@ func (b *Builder) setup() error {
 
 	// check for build container (ie bradrydzewski/go:1.2)
 	// and download if it doesn't already exist
+	// #Docker拿到build相关的容器地址
 	if _, err := b.dockerClient.Images.Inspect(b.Build.Image); err == docker.ErrNotFound {
 		// download the image if it doesn't exist
 		if err := b.dockerClient.Images.Pull(b.Build.Image); err != nil {
@@ -248,6 +253,7 @@ func (b *Builder) setup() error {
 
 	// create the Docker image
 	id := createUID()
+	// #Docker 开始编译
 	if err := b.dockerClient.Images.Build(id, dir); err != nil {
 		return err
 	}
@@ -256,6 +262,7 @@ func (b *Builder) setup() error {
 	log.Infof("copying repository to %s", b.Repo.Dir)
 
 	// get the image details
+	// #Docker 容器出错了需要删除
 	b.image, err = b.dockerClient.Images.Inspect(id)
 	if err != nil {
 		// if we have problems with the image make sure
@@ -385,6 +392,7 @@ func (b *Builder) run() error {
 	}
 
 	// create the container from the image
+	// #Docker 创建容器
 	run, err := b.dockerClient.Containers.Create(&conf)
 	if err != nil {
 		return err
@@ -395,10 +403,12 @@ func (b *Builder) run() error {
 
 	// attach to the container
 	go func() {
+		//#Docker attach 容器，不知道干啥的
 		b.dockerClient.Containers.Attach(run.ID, &writer{b.Stdout})
 	}()
 
 	// start the container
+	//#Docker 运行容器
 	if err := b.dockerClient.Containers.Start(run.ID, &host); err != nil {
 		b.BuildState.ExitCode = 1
 		b.BuildState.Finished = time.Now().UTC().Unix()
